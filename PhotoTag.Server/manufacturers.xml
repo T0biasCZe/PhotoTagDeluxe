@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ArrayOfManufacturer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Manufacturer>
+    <Id>kodak</Id>
+    <Name>Kodak</Name>
+    <LogoFileName>kodak.png</LogoFileName>
+    <FilmStocks>
+      <FilmStock>
+        <Id>ultramax-400</Id>
+        <NameShort>UltraMax</NameShort>
+        <NameFullUser>Kodak UltraMax 400</NameFullUser>
+        <IconFileName>ultramax400.png</IconFileName>
+        <ISO>400</ISO>
+      </FilmStock>
+      <FilmStock>
+        <Id>colorplus-200</Id>
+        <NameShort>Color Plus</NameShort>
+        <NameFullUser>Kodak Color Plus 200</NameFullUser>
+        <IconFileName>colourplus200.png</IconFileName>
+        <ISO>200</ISO>
+      </FilmStock>
+      <FilmStock>
+        <Id>portra-400</Id>
+        <NameShort>Portra</NameShort>
+        <NameFullUser>Kodak Portra</NameFullUser>
+        <IconFileName>portra-400.png</IconFileName>
+        <ISO>400</ISO>
+      </FilmStock>
+      <FilmStock>
+        <Id>ektar-100</Id>
+        <NameShort>Ektar</NameShort>
+        <NameFullUser>Kodak Ektar 100</NameFullUser>
+        <IconFileName>ektar100.png</IconFileName>
+        <ISO>100</ISO>
+      </FilmStock>
+		<FilmStock>
+			<Id>ektapan</Id>
+			<NameShort>Ektapan</NameShort>
+			<NameFullUser>Kodak Ektapan</NameFullUser>
+			<IconFileName>ektapan.png</IconFileName>
+			<ISO>400</ISO>
+		</FilmStock>
+		<FilmStock>
+			<Id>ektacolorpro</Id>
+			<NameShort>Ektacolor Pro</NameShort>
+			<NameFullUser>Kodak Ektacolor Pro</NameFullUser>
+			<IconFileName>ektacolorpro.png</IconFileName>
+			<ISO>400</ISO>
+		</FilmStock>
+      <FilmStock>
+        <Id>tmax-400</Id>
+        <NameShort>T-Max</NameShort>
+        <NameFullUser>Kodak T-Max</NameFullUser>
+        <IconFileName>tmax-400.png</IconFileName>
+        <ISO>400</ISO>
+      </FilmStock>
+      <FilmStock>
+        <Id>trix-400</Id>
+        <NameShort>Trix</NameShort>
+        <NameFullUser>Kodak Trix 400</NameFullUser>
+        <IconFileName>trix-400.png</IconFileName>
+        <ISO>400</ISO>
+      </FilmStock>
+	<FilmStock>
+		<Id>verita-200d</Id>
+		<NameShort>Verita</NameShort>
+		<NameFullUser>Kodak Verita 200D</NameFullUser>
+		<IconFileName>verita-200d.png</IconFileName>
+		<ISO>200</ISO>
+	</FilmStock>
+    </FilmStocks>
+  </Manufacturer>
+  
+  <Manufacturer>
+    <Id>fujifilm</Id>
+    <Name>Fujifilm</Name>
+    <LogoFileName>fujifilm.png</LogoFileName>
+    <FilmStocks>
+      <FilmStock>
+        <Id>fujicolor-400</Id>
+        <NameShort>Fujicolor 400</NameShort>
+        <NameFullUser>Fujicolor 400</NameFullUser>
+        <IconFileName>fujicolor400.png</IconFileName>
+        <ISO>400</ISO>
+      </FilmStock>
+      <FilmStock>
+        <Id>fujifilm-400</Id>
+        <NameShort>Fujifilm 400</NameShort>
+        <NameFullUser>Fujifilm 400</NameFullUser>
+        <IconFileName>fujifilm400.png</IconFileName>
+        <ISO>400</ISO>
+      </FilmStock>
+      <FilmStock>
+        <Id>fujifilm-200</Id>
+        <NameShort>Fujifilm 200</NameShort>
+        <NameFullUser>Fujifilm 200</NameFullUser>
+        <IconFileName>fujifilm200.png</IconFileName>
+        <ISO>200</ISO>
+      </FilmStock>
+      <FilmStock>
+        <Id>superia-400</Id>
+        <NameShort>Superia X-TRA</NameShort>
+        <NameFullUser>Fujifilm Superia X-TRA 400</NameFullUser>
+        <IconFileName>superia400.png</IconFileName>
+        <ISO>400</ISO>
+      </FilmStock>
+      <FilmStock>
+        <Id>velvia-100</Id>
+        <NameShort>Velvia</NameShort>
+        <NameFullUser>Fujifilm Velvia</NameFullUser>
+        <IconFileName>velvia100.png</IconFileName>
+        <ISO>100</ISO>
+      </FilmStock>
+      <FilmStock>
+        <Id>neopan-100</Id>
+        <NameShort>Neopan</NameShort>
+        <NameFullUser>Fujifilm Neopan</NameFullUser>
+        <IconFileName>neopan100.png</IconFileName>
+        <ISO>100</ISO>
+      </FilmStock>
+    </FilmStocks>
+  </Manufacturer>
+	
+  <Manufacturer>
+    <Id>foma</Id>
+    <Name>Foma</Name>
+    <LogoFileName>foma.png</LogoFileName>
+    <FilmStocks>
+      <FilmStock>
+        <Id>fomapan-100</Id>
+        <NameShort>Fomapan Classic</NameShort>
+        <NameFullUser>Fomapan Classic 100</NameFullUser>
+        <IconFileName>fomapan100.png</IconFileName>
+        <ISO>100</ISO>
+      </FilmStock>
+      <FilmStock>
+        <Id>fomapan-200</Id>
+        <NameShort>Fomapan Creative</NameShort>
+        <NameFullUser>Fomapan Creative 200</NameFullUser>
+        <IconFileName>fomapan200.png</IconFileName>
+        <ISO>200</ISO>
+      </FilmStock>
+      <FilmStock>
+        <Id>fomapan-400</Id>
+        <NameShort>Fomapan Action</NameShort>
+        <NameFullUser>Fomapan Action 400</NameFullUser>
+        <IconFileName>fomapan400.png</IconFileName>
+        <ISO>400</ISO>
+      </FilmStock>
+    </FilmStocks>
+  </Manufacturer>
+	  
+  <Manufacturer>
+    <Id>agfa</Id>
+    <Name>Agfa</Name>
+    <LogoFileName>afga.png</LogoFileName>
+    <FilmStocks>
+      <FilmStock>
+        <Id>apx-100</Id>
+        <NameShort>APX 100</NameShort>
+        <NameFullUser>Agfa APX 100</NameFullUser>
+        <IconFileName>apx100.png</IconFileName>
+        <ISO>100</ISO>
+      </FilmStock>
+      <FilmStock>
+        <Id>apx-400</Id>
+        <NameShort>APX 400</NameShort>
+        <NameFullUser>Agfa APX 400</NameFullUser>
+        <IconFileName>apx400.png</IconFileName>
+        <ISO>400</ISO>
+      </FilmStock>
+    </FilmStocks>
+  </Manufacturer>
+	
+  <Manufacturer>
+    <Id>cinestill</Id>
+    <Name>Cinestill</Name>
+    <LogoFileName>Cinestill.png</LogoFileName>
+    <FilmStocks>
+      <FilmStock>
+        <Id>cinestill-400d</Id>
+        <NameShort>400D</NameShort>
+        <NameFullUser>Cinestill 400D</NameFullUser>
+        <IconFileName>cinestill400d.png</IconFileName>
+        <ISO>400</ISO>
+      </FilmStock>
+    </FilmStocks>
+  </Manufacturer>
+	
+  <Manufacturer>
+    <Id>harman</Id>
+    <Name>Harman</Name>
+    <LogoFileName>harman.png</LogoFileName>
+    <FilmStocks>
+      <FilmStock>
+        <Id>phoenix-200</Id>
+        <NameShort>Phoenix</NameShort>
+        <NameFullUser>Harman Phoenix 200</NameFullUser>
+        <IconFileName>phoenix200.png</IconFileName>
+        <ISO>200</ISO>
+      </FilmStock>
+      <FilmStock>
+        <Id>phoenixII-200</Id>
+        <NameShort>Phoenix II</NameShort>
+        <NameFullUser>Harman Phoenix II 200</NameFullUser>
+        <IconFileName>phoenixII200.png</IconFileName>
+        <ISO>200</ISO>
+      </FilmStock>
+    </FilmStocks>
+  </Manufacturer>
+	
+  <Manufacturer>
+    <Id>ilford</Id>
+    <Name>Ilford</Name>
+    <LogoFileName>ilford.png</LogoFileName>
+    <FilmStocks>
+      <FilmStock>
+        <Id>ilfordpan-100</Id>
+        <NameShort>IlfordPan</NameShort>
+        <NameFullUser>IlfordPan 100</NameFullUser>
+        <IconFileName>ilfordpan100.png</IconFileName>
+        <ISO>100</ISO>
+      </FilmStock>
+      <FilmStock>
+        <Id>ilfordpan-400</Id>
+        <NameShort>IlfordPan</NameShort>
+        <NameFullUser>IlfordPan 400</NameFullUser>
+        <IconFileName>ilfordpan400.png</IconFileName>
+        <ISO>400</ISO>
+      </FilmStock>
+    </FilmStocks>
+  </Manufacturer>
+
+  <Manufacturer>
+    <Id>nintendo</Id>
+    <Name>Nintendo</Name>
+    <LogoFileName>nintendo.png</LogoFileName>
+    <FilmStocks>
+      <FilmStock>
+        <Id>gameboy-camera</Id>
+        <NameShort>GBCam</NameShort>
+        <NameFullUser>Gameboy Camera</NameFullUser>
+        <IconFileName>gbcam.png</IconFileName>
+        <ISO>1600</ISO>
+      </FilmStock>
+    </FilmStocks>
+  </Manufacturer>
+</ArrayOfManufacturer>

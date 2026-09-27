@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PentaMap v2.7 MultiLang Metro</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body { margin: 0; padding: 0; background: #000; font-family: "Segoe UI", Tahoma, sans-serif; overflow: hidden; }
+        #map-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; }
+        #map { position: absolute; top: 0; left: 0; background: #000; }
+
+        /* Fragment Timeline UI */
+        #loading-tracker {
+            position: absolute; z-index: 1500; top: 10px; left: 50%; transform: translateX(-50%);
+            width: 180px; padding: 6px; text-align: center;
+            background: rgba(20, 20, 20, 0.9); border: 1px solid #444; border-radius: 2px; pointer-events: none;
+        }
+        .status-text { font-size: 9px; font-weight: bold; margin-bottom: 4px; color: #aaa; display: flex; justify-content: space-between; text-transform: uppercase; }
+        .progress-container { height: 10px; width: 100%; background: #222; border-radius: 2px; overflow: hidden; display: flex; flex-direction: row; align-items: center; }
+        .frag { height: 100%; width: 3px; margin-right: 1px; flex-shrink: 0; animation: grow 0.2s ease-out; }
+        .f-net { background: #0077ff; } 
+        .f-que { background: #00ff88; } 
+        .f-hit { background: #ffcc00; } 
+        @keyframes grow { from { width: 0; } to { width: 3px; } }
+
+        /* Metro Storage Tracker */
+        #storage-tracker {
+            position: absolute; z-index: 1500; bottom: 30px; right: 5px;
+            min-width: 80px; padding: 3px 6px; background: rgba(0, 0, 0, 0.5);
+            color: #ccc; border: none; border-radius: 2px; font-size: 9px;
+            text-align: right; pointer-events: auto !important; cursor: pointer;
+
+            pointer-events: auto !important; /* Povolí klikání */
+            cursor: pointer; /* Změní kurzor při najetí */
+        }
+
+        /* Logo & Attribution */
+        .mapycz-logo-control { margin-bottom: 0 !important; margin-left: 0 !important; line-height: 0; }
+        .mapycz-logo-control img { display: block; width: 182px !important; height: 40px !important; filter: drop-shadow(0 0 2px rgba(0,0,0,1)); }
+        .leaflet-bottom.leaflet-left { margin-bottom: 5px !important; margin-left: 5px !important; }
+
+        /* Metro Zoom Buttons */
+        .leaflet-touch .leaflet-control-zoom a, .leaflet-control-zoom a {
+            width: 60px !important; height: 60px !important; line-height: 60px !important;
+            font-size: 40px !important; background: #fff !important; color: #000 !important;
+            border: none !important; border-bottom: 2px solid #0078D7 !important; border-radius: 0 !important;
+            margin-bottom: 4px; display: flex; align-items: center; justify-content: center;
+        }
+        .leaflet-control-zoom { margin-top: 20px !important; margin-right: 20px !important; border: none !important; }
+
+        .leaflet-control-attribution { font-size: 14px !important; line-height: 18px !important; background: rgba(255,255,255,0.4) !important; padding: 2px 8px !important; color: #000 !important; }
+        .leaflet-control-attribution a { color: #000 !important; text-decoration: underline !important; }
+        b { color: #fff; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div id="map-container">
+        <div id="map"></div>
+    </div>
+
+    <div id="loading-tracker" class="ui-panel" style="display:none">
+        <div class="status-text" style="display: none">
+            <span id="txt-activity-label">AKTIVITA</span>
+            <span id="txt-numbers"></span>
+        </div>
+        <div id="progress-timeline" class="progress-container"></div>
+    </div>
+
+    <div id="storage-tracker" class="ui-panel">...</div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        (function () {
+            // --- JAZYKOVÁ MUTACE ---
+            var lang = (navigator.language || navigator.userLanguage).slice(0, 2).toLowerCase();
+            var strings = {
+                cs: {
+                    activity: "Aktivita",
+                    usage: "Využití",
+                    tiles: "Dlaždice",
+                    init: "Inicializace...",
+                    confirm: "Opravdu si přejete vymazat celou cache mapových dlaždic?",
+                    cleared: "Cache byla vymazána. Stránka se nyní restartuje."
+                },
+                en: {
+                    activity: "Activity",
+                    usage: "Storage",
+                    tiles: "Tiles",
+                    init: "Initializing...",
+                    confirm: "Do you really want to clear the entire map tile cache?",
+                    cleared: "Cache cleared. The page will now reload."
+                }
+            };
+            var LNG = strings[lang] || strings.en;
+
+            // --- KONFIGURACE ---
+            var API_KEY = "rL6eTdgGhOOwKz2xc7b1JfI4BW96j-FWMFnaIFicZHQ";
+            var CACHE_LIMIT = 700; 
+            var STATS_LIMIT = 8000;
+            var REPLACEMENT_THRESHOLD = 1;
+
+            // --- URL & SCALE ---
+            function getParam(n) { var m = new RegExp("[?&]"+n+"=([^&#]*)").exec(window.location.search); return m ? decodeURIComponent(m[1]) : null; }
+            var visualScale = parseFloat(getParam("scale")) || 0.75;
+            var mapEl = document.getElementById("map");
+            mapEl.style.transform = "scale(" + visualScale + ")";
+            mapEl.style.width = (100 / visualScale) + "%";
+            mapEl.style.height = (100 / visualScale) + "%";
+            mapEl.style.transformOrigin = "0 0";
+
+            document.getElementById('txt-activity-label').innerText = LNG.activity;
+            document.getElementById('storage-tracker').innerText = LNG.init;
+
+            // --- PENTAPACKER ---
+            var PentaPacker = {
+                lookup: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
+                revLookup: (function () {
+                    var m = {}; var s = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+                    for (var i = 0; i < s.length; i++) m[s.charAt(i)] = i; return m;
+                })(),
+                pack: function (s) {
+                    var pad = (s.slice(-2) === '==') ? 2 : (s.slice(-1) === '=') ? 1 : 0;
+                    var sNoP = (pad > 0) ? s.slice(0, -pad) : s;
+                    var rem = sNoP.length % 5, out = "", i = 0;
+                    while (i < sNoP.length) {
+                        var v = [0,0,0,0,0];
+                        for(var j=0; j<5; j++) if(i < sNoP.length) v[j] = this.revLookup[sNoP.charAt(i++)] || 0;
+                        var h = (v[0] << 9) | (v[1] << 3) | (v[2] >> 3);
+                        var l = ((v[2] & 0x07) << 12) | (v[3] << 6) | v[4];
+                        out += String.fromCharCode(0x4000 + h) + String.fromCharCode(0x4000 + l);
+                    }
+                    return out + String.fromCharCode(65 + (((rem & 0x07) << 2) | (pad & 0x03)));
+                },
+                unpack: function (s) {
+                    if (!s) return "";
+                    var m = s.charCodeAt(s.length - 1) - 65;
+                    var pad = m & 0x03, rem = (m >> 2) & 0x07;
+                    var p = s.slice(0, -1), out = "", i = 0;
+                    for (var b = 0; b < p.length / 2; b++) {
+                        var h = p.charCodeAt(i++) - 0x4000, l = p.charCodeAt(i++) - 0x4000;
+                        var v = [(h >> 9) & 0x3F, (h >> 3) & 0x3F, ((h & 0x07) << 3) | (l >> 12), (l >> 6) & 0x3F, l & 0x3F];
+                        for(var j=0; j<5; j++) out += this.lookup.charAt(v[j]);
+                    }
+                    var len = (rem === 0) ? (p.length/2*5) : ((p.length/2-1)*5+rem);
+                    out = out.slice(0, len);
+                    return out + (pad === 2 ? "==" : pad === 1 ? "=" : "");
+                }
+            };
+
+            // --- UI TIMELINE & STORAGE ---
+            var activeCount = 0;
+            var hideTimeout = null;
+
+            function addFragment(type) {
+                var el = document.getElementById('loading-tracker');
+                var container = document.getElementById('progress-timeline');
+                el.style.display = 'block';
+                if (hideTimeout) clearTimeout(hideTimeout);
+                var frag = document.createElement('div');
+                frag.className = 'frag f-' + type;
+                container.appendChild(frag);
+                if (container.childNodes.length > 40) container.removeChild(container.firstChild);
+                if (activeCount === 0) hideTimeout = setTimeout(hideTracker, 1500);
+            }
+
+            function hideTracker() {
+                document.getElementById('loading-tracker').style.display = 'none';
+                document.getElementById('progress-timeline').innerHTML = "";
+            }
+
+            function updateCounter(change) {
+                activeCount += change;
+                if (activeCount < 0) activeCount = 0;
+                document.getElementById('txt-numbers').innerHTML = activeCount > 0 ? activeCount : "";
+                if (activeCount === 0) {
+                    if (hideTimeout) clearTimeout(hideTimeout);
+                    hideTimeout = setTimeout(hideTracker, 1500);
+                }
+            }
+
+            function updateStorageInfo() {
+                var b = 0, cc = 0;
+                for (var i = 0; i < localStorage.length; i++) {
+                    var k = localStorage.key(i), v = localStorage.getItem(k);
+                    if (k && k.indexOf('mapCache_tile_') === 0) {
+                        b += (k.length + v.length) * 2;
+                        cc++;
+                    }
+                }
+                document.getElementById('storage-tracker').innerHTML = LNG.usage + ": <b>" + (b/1048576).toFixed(2) + " MiB</b><br>" + LNG.tiles + ": <b>" + cc + "</b>";
+            }
+
+            // --- CLEAR GESTURE ---
+            var storageEl = document.getElementById('storage-tracker');
+            var clickCount = 0, clickTimer = null;
+            storageEl.addEventListener('click', function() {
+                clickCount++;
+                if (clickTimer) clearTimeout(clickTimer);
+                if (clickCount === 4) {
+                    if (confirm(LNG.confirm)) {
+                        var keys = [];
+                        for(var i=0; i<localStorage.length; i++) {
+                            var k = localStorage.key(i);
+                            if(k && k.indexOf('mapCache_') === 0) keys.push(k);
+                        }
+                        keys.forEach(function(k){ localStorage.removeItem(k); });
+                        alert(LNG.cleared); window.location.reload();
+                    }
+                    clickCount = 0;
+                } else {
+                    clickTimer = setTimeout(function(){ clickCount = 0; }, 500);
+                }
+            });
+
+            // --- QUEUE WORKER ---
+            var sharedCanvas = document.createElement('canvas'); sharedCanvas.width = 256; sharedCanvas.height = 256;
+            var sharedCtx = sharedCanvas.getContext('2d');
+            var queue = [], pending = {}, processing = false;
+
+            function processQueue() {
+                if (queue.length === 0) { processing = false; return; }
+                processing = true; 
+                var task = queue.shift();
+                delete pending[task.tileId];
+                if (task.img && task.img.parentNode) {
+                    try {
+                        var tiles = [];
+                        for (var i = 0; i < localStorage.length; i++) {
+                            var k = localStorage.key(i); if (k.indexOf('mapCache_tile_') === 0) tiles.push(k);
+                        }
+                        var stats = JSON.parse(localStorage.getItem('mapCache_stats') || "{}");
+                        var shouldSave = tiles.length < CACHE_LIMIT;
+                        if (!shouldSave) {
+                            var low = Infinity, lowId = null;
+                            tiles.forEach(function(id) {
+                                var tid = id.replace('mapCache_tile_', '');
+                                var c = stats[tid] ? stats[tid].c : 0;
+                                if (c < low) { low = c; lowId = id; }
+                            });
+                            if ((stats[task.tileId] ? stats[task.tileId].c : 1) >= low + REPLACEMENT_THRESHOLD) {
+                                localStorage.removeItem(lowId); shouldSave = true;
+                            }
+                        }
+                        if (shouldSave) {
+                            sharedCtx.fillStyle = "#FFFFFF"; sharedCtx.fillRect(0,0,256,256);
+                            sharedCtx.drawImage(task.img, 0,0,256,256);
+                            var data = sharedCanvas.toDataURL('image/jpeg', 0.15).split(',')[1];
+                            if (data.length > 3000) {
+                                localStorage.setItem('mapCache_tile_' + task.tileId, PentaPacker.pack(data));
+                                addFragment('que'); updateStorageInfo();
+                            }
+                        }
+                    } catch(e) {}
+                }
+                updateCounter(-1); setTimeout(processQueue, 50);
+            }
+
+            // --- LAYER ---
+            var PentaLayer = L.TileLayer.extend({
+                createTile: function (coords, done) {
+                    var img = document.createElement('img'); img.crossOrigin = "Anonymous";
+                    var tileId = (this.options.layerName || "tile") + "_" + coords.z + "_" + coords.x + "_" + coords.y;
+                    
+                    var stats = JSON.parse(localStorage.getItem('mapCache_stats') || "{}");
+                    stats[tileId] = { c: (stats[tileId] ? stats[tileId].c : 0) + 1, t: Date.now() };
+                    var keys = Object.keys(stats);
+                    if (keys.length > STATS_LIMIT) {
+                        keys.sort(function(a,b){ return stats[a].t - stats[b].t; });
+                        for(var i=0; i<Math.floor(STATS_LIMIT*0.05); i++) {
+                            if(keys[i] !== tileId) { localStorage.removeItem('mapCache_tile_'+keys[i]); delete stats[keys[i]]; }
+                        }
+                    }
+                    localStorage.setItem('mapCache_stats', JSON.stringify(stats));
+
+                    var cached = localStorage.getItem('mapCache_tile_' + tileId);
+                    if (cached) {
+                        try {
+                            var up = PentaPacker.unpack(cached);
+                            if (up.length > 3000) {
+                                img.onerror = function() { localStorage.removeItem('mapCache_tile_' + tileId); this.src = this._getTileUrl(coords); }.bind(this);
+                                img.onload = function() { done(null, img); };
+                                addFragment('hit'); img.src = "data:image/jpeg;base64," + up;
+                                return img;
+                            }
+                        } catch(e) { localStorage.removeItem('mapCache_tile_' + tileId); }
+                    }
+
+                    updateCounter(1);
+                    img.onerror = function() { updateCounter(-1); done(null, img); };
+                    img.onload = function() {
+                        done(null, img); addFragment('net'); updateCounter(-1);
+                        if (!pending[tileId] && !localStorage.getItem('mapCache_tile_' + tileId)) {
+                            updateCounter(1); pending[tileId] = true;
+                            queue.push({ img: img, tileId: tileId });
+                            if (!processing) processQueue();
+                        }
+                    };
+                    img.src = this.getTileUrl(coords);
+                    img._getTileUrl = this.getTileUrl.bind(this);
+                    return img;
+                }
+            });
+
+            // --- INIT ---
+            var lat = parseFloat(getParam("lat")) || 49.8285650;
+            var lon = parseFloat(getParam("lon")) || 18.1733317;
+            var zoom = parseInt(getParam("zoom")) || 11;
+
+            var map = L.map('map', { zoomControl: false }).setView([lat, lon], zoom);
+            L.control.zoom({ position: 'topright' }).addTo(map);
+            L.marker([lat, lon]).addTo(map);
+
+            var LogoControl = L.Control.extend({
+                options: { position: "bottomleft" },
+                onAdd: function () {
+                    var container = L.DomUtil.create("div", "mapycz-logo-control");
+                    container.innerHTML = '<a href="https://mapy.cz/" target="_blank"><img src="https://upload.wikimedia.org/wikipedia/commons/c/c6/Logo_Mapy-com.svg" alt="Mapy.cz" /></a>';
+                    L.DomEvent.disableClickPropagation(container);
+                    return container;
+                }
+            });
+            new LogoControl().addTo(map);
+
+            new PentaLayer('https://api.mapy.com/v1/maptiles/outdoor/256/{z}/{x}/{y}?apikey=' + API_KEY, { 
+                attribution: '&copy; Seznam.cz', layerName: 'outdoor' 
+            }).addTo(map);
+
+            updateStorageInfo();
+        })();
+    </script>
+</body>
+</html>

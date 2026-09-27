@@ -1,0 +1,41 @@
+# Build results
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio cache/options
+.vs/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# NuGet packages restore folder (legacy packages.config projects)
+packages/
+
+# Visual Studio project upgrade logs
+UpgradeLog*.htm
+
+# Test results
+TestResults/
+
+# Local-only clutter, not meant for history
+Backup/
+TEMPTEST/
+PhotoTag.ClientWP2 pre common migration.7z
+bugreport-*.zip
+*.Designer.cs.dll
+
+# Phone clients and their client-only shared projects. Developed in this same working
+# tree, but not published here yet. PhotoTag.ClientHTML is NOT in this list - the server
+# copies it into its own build output and serves it directly (see PhotoTag.Server.csproj).
+PhotoTag.ClientWP2/
+PhotoTag.ClientAndroid/
+PhotoTag.ClientCommon/
+PhotoTag.LangHelper/
+
+# Full-resolution source panorama photos. Not referenced by any project (the WP2 build
+# uses its own much smaller copies under PhotoTag.ClientWP2/Assets/PanoramaImages/), and
+# at 200MB+ they dominate the repository for no functional reason.
+PanoramaImages/

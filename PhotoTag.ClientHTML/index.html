@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>PhotoTagDeluxe</title>
+	<link rel="stylesheet" href="stylopis.css">
+</head>
+<body>
+	<div class="header-container"><div class="header" id="panoramaHeader">photo tag deluxe</div></div>
+	<div class="panorama">
+		<div class="panorama-contents">
+			<div class="panorama-content" id="accountTab" data-tabIndex="0">
+				<div class="panorama-tab-header">účet</div>
+				<div class="label" id="label-server">adresa serveru</div>
+				<input class="input" type="text" id="serverUrl" placeholder="https://new.tobikcze.eu/phototagdeluxe/">
+				<div class="label" id="label-username">prihlasovaci jmeno</div>
+				<input class="input" type="text" id="username" placeholder="Username">
+				<div class="label" id="label-password">heslo</div>
+				<input class="input" type="password" id="password" placeholder="Password">
+				<div style="display:flex;justify-content:space-between;">
+					<button class="button" id="registerBtn">registrace</button>
+					<button class="button" id="loginBtn">přihlásit se</button>
+				</div>
+			</div>
+			<div class="panorama-content" id="rollsListTab" data-tabIndex="1">
+				<div class="panorama-tab-header">filmy</div>
+				<p>Obsah bude zde</p>
+			</div>
+			<div class="panorama-content" id="createRollTab" data-tabIndex="999999">
+				<div class="panorama-tab-header">nový film</div>
+				<div class="label" id="label-manufacturer">výrobce</div>
+				<div class="metro-dropdown" id="manufacturerDropdown"></div>
+				<div class="label" id="label-filmstock">typ filmu</div>
+				<div class="metro-dropdown" id="filmStockDropdown"></div>
+				<div class="label" id="label-description">popis</div>
+				<input class="input" type="text" id="rollDescription" placeholder="Popis">
+				<div class="label" id="label-camera">fotoaparát</div>
+				<input class="input" type="text" id="cameraName" placeholder="Fotoaparát">
+				<div class="label" id="label-pushpull">push/pull info</div>
+				<input class="input" type="text" id="pushPullInfo" placeholder="Push/Pull info">
+				<div style="margin:12px 0;">
+					<label id="label-encrypt"><input type="checkbox" id="encryptRoll"> šifrovat gps</label>
+				</div>
+				<button class="button" id="createRollBtn">vytvořit film</button>
+			</div>
+			<!-- další panorama-content zde -->
+
+			<!--Useless spacer aby správně scrollovat posledni tab-->
+			<div style="width: 256px; display: inline-block;"></div>
+		</div>
+	</div>
+	<script src="./apiClient.js"></script>
+	<script src="./login.js"></script>
+	<script src="./rollcreation.js"></script>
+	<script src="./panorama.js"></script>
+	<script src="./metroDropdown.js"></script>
+</body>
+</html>

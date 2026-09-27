@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Mapa Phototag Deluxe (Ultra Optimized)</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <style>
+        html, body {
+            margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #111;
+        }
+        #map { width: 100%; height: 100%; }
+        .leaflet-tile-container img { image-rendering: auto; }
+        .mapycz-logo-control, .mapycz-logo-control a {
+            display: block; margin: 0; padding: 0; line-height: 0; height: 24px;
+        }
+        .mapycz-logo-control img { display: block; width: 109px; height: 24px; }
+        .leaflet-bottom .mapycz-logo-control.leaflet-control { margin-bottom: 0; margin-left: 0; }
+        .leaflet-control-container, .leaflet-top, .leaflet-bottom { z-index: 1200; }
+        .leaflet-touch .leaflet-control-zoom a, .leaflet-control-zoom a {
+            width: 56px !important; height: 56px !important; line-height: 56px !important;
+            font-size: 36px !important; font-weight: bold;
+        }
+        .leaflet-touch .leaflet-control-layers-toggle, .leaflet-control-layers-toggle {
+            width: 56px !important; height: 56px !important; background-size: 34px 34px !important;
+        }
+        .leaflet-control-layers-expanded { padding: 8px 10px; }
+        .leaflet-control-layers-expanded label { line-height: 32px; font-size: 22px; }
+        .leaflet-control-layers-selector { width: 24px; height: 24px; vertical-align: middle; margin-right: 8px; }
+
+        /* --- UI TRACKERS --- */
+        #storage-tracker {
+            position: absolute; bottom: 10px; right: 10px;
+            background: rgba(0, 0, 0, 0.85); color: #00ff00;
+            padding: 8px 12px; font-family: monospace; font-size: 13px; line-height: 1.4;
+            border-radius: 4px; z-index: 9999; pointer-events: none; text-align: left;
+            border: 1px solid #333;
+        }
+        #loading-tracker {
+            position: absolute; top: 10px; left: 10px;
+            background: rgba(255, 165, 0, 0.9); color: #000;
+            padding: 8px 12px; font-family: sans-serif; font-size: 14px; font-weight: bold;
+            border-radius: 4px; z-index: 9999; pointer-events: none;
+            display: none; /* Skryto ve výchozím stavu */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div id="loading-tracker">⏳ Zpracovávám: 0</div>
+    <div id="storage-tracker">Vypočítávám úložiště...</div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <script>
+        (function () {
+            var API_KEY = "rL6eTdgGhOOwKz2xc7b1JfI4BW96j-FWMFnaIFicZHQ";
+
+            // --- HELPER FUNCTIONS ---
+            function getQueryParam(name) {
+                var escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+                var regex = new RegExp("[?&]" + escaped + "=([^&#]*)");
+                var match = regex.exec(window.location.search);
+                return match ? decodeURIComponent(match[1].replace(/\+/g, " ")) : null;
+            }
+
+            function parseNumber(value, fallback) {
+                var num = parseFloat(value);
+                return isNaN(num) ? fallback : num;
+            }
+
+            function clamp(value, min, max) { return Math.min(Math.max(value, min), max); }
+
+            function getLocalObj(key, defaultObj) {
+                try { var val = localStorage.getItem(key); return val ? JSON.parse(val) : defaultObj; } 
+                catch (e) { return defaultObj; }
+            }
+
+            function setLocalObj(key, obj) {
+                try { localStorage.setItem(key, JSON.stringify(obj)); } catch (e) {}
+            }
+
+            // --- LOADING TRACKER ---
+            var activeTasks = 0;
+            function updateLoadingUI() {
+                var el = document.getElementById('loading-tracker');
+                if (activeTasks > 0) {
+                    el.style.display = 'block';
+                    el.innerHTML = "⏳ Zpracovávám: " + activeTasks;
+                } else {
+                    el.style.display = 'none';
+                }
+            }
+            function startTask() { activeTasks++; updateLoadingUI(); }
+            function finishTask() { activeTasks--; if (activeTasks < 0) activeTasks = 0; updateLoadingUI(); }
+
+            // --- STORAGE TRACKER (DEBOUNCED) ---
+            var storageUpdateTimer = null;
+            function scheduleStorageUpdate() {
+                if (storageUpdateTimer) clearTimeout(storageUpdateTimer);
+                storageUpdateTimer = setTimeout(function() { updateStorageTracker(); }, 1000); 
+            }
+
+            function formatKiB(bytes) { return (bytes / 1024).toFixed(1) + " KiB"; }
+
+            function updateStorageTracker() {
+                var totalBytes = 0, statsCount = 0, cacheCount = 0;
+                var metrics = {
+                    outdoor: { bytes: 0, count: 0 },
+                    winter: { bytes: 0, count: 0 },
+                    aerial: { bytes: 0, count: 0 }
+                };
+
+                try {
+                    for (var i = 0; i < localStorage.length; i++) {
+                        var key = localStorage.key(i);
+                        var value = localStorage.getItem(key);
+                        var itemBytes = (key.length + value.length) * 2;
+                        
+                        totalBytes += itemBytes;
+                        
+                        if (key === 'mapCache_stats') {
+                            statsCount = value ? Object.keys(JSON.parse(value)).length : 0;
+                        } else if (key.indexOf('mapCache_tile_') === 0) {
+                            cacheCount++; 
+                            if (key.indexOf('mapCache_tile_outdoor_') === 0) {
+                                metrics.outdoor.bytes += itemBytes; metrics.outdoor.count++;
+                            } else if (key.indexOf('mapCache_tile_winter_') === 0) {
+                                metrics.winter.bytes += itemBytes; metrics.winter.count++;
+                            } else if (key.indexOf('mapCache_tile_aerial_') === 0) {
+                                metrics.aerial.bytes += itemBytes; metrics.aerial.count++;
+                            }
+                        }
+                    }
+                } catch(e) {}
+                
+                var mib = (totalBytes / (1024 * 1024)).toFixed(2);
+                var getAvg = function(type) { var m = metrics[type]; return m.count > 0 ? formatKiB(m.bytes / m.count) : "0.0 KiB"; };
+
+                var html = "<b>Úložiště:</b> " + mib + " MiB<br>";
+                html += "<b>Známé:</b> " + statsCount + " | <b>Uloženo:</b> " + cacheCount + "<br>";
+                html += "<hr style='margin:4px 0; border-color:#444'>";
+                html += "<b>Průměrný rozměr JPEG:</b><br>";
+                html += "&nbsp;&nbsp;Turist: " + getAvg('outdoor') + "<br>";
+                html += "&nbsp;&nbsp;Zimní: &nbsp;" + getAvg('winter') + "<br>";
+                html += "&nbsp;&nbsp;Satelit: " + getAvg('aerial');
+                
+                var trackerEl = document.getElementById('storage-tracker');
+                if (trackerEl) trackerEl.innerHTML = html;
+            }
+
+            // --- CANVAS QUEUE WORKER & CACHE LIMITS ---
+            var CACHE_LIMIT = 300; 
+            var STATS_LIMIT = 8096;
+            var REPLACEMENT_THRESHOLD = 2; // O kolik musí nová porazit starou
+
+            var sharedCanvas = document.createElement('canvas');
+            sharedCanvas.width = 256; sharedCanvas.height = 256;
+            var sharedCtx = sharedCanvas.getContext('2d');
+            var conversionQueue = [];
+            var isProcessingQueue = false;
+
+            function processNextInQueue() {
+                if (conversionQueue.length === 0) {
+                    isProcessingQueue = false;
+                    return;
+                }
+                isProcessingQueue = true;
+                var task = conversionQueue.shift();
+
+                try {
+                    // 1. Zkontrolujeme limit a popularitu PŘED Canvasem
+                    var currentIndex = [];
+                    for (var i = 0; i < localStorage.length; i++) {
+                        var key = localStorage.key(i);
+                        if (key && key.indexOf('mapCache_tile_') === 0) {
+                            currentIndex.push(key.replace('mapCache_tile_', ''));
+                        }
+                    }
+
+                    var stats = getLocalObj('mapCache_stats', {});
+                    // Statistiky jsou nyní objekt {c: count, t: timestamp}. Čteme '.c'
+                    var currentCount = stats[task.tileId] ? stats[task.tileId].c : 1; 
+                    
+                    var shouldProcess = false;
+                    var tileToRemove = null;
+
+                    if (currentIndex.length < CACHE_LIMIT) {
+                        shouldProcess = true; 
+                    } else {
+                        var lowestCount = Infinity;
+                        var lowestId = null;
+                        for (var j = 0; j < currentIndex.length; j++) {
+                            var id = currentIndex[j];
+                            var count = stats[id] ? stats[id].c : 0;
+                            if (count < lowestCount) {
+                                lowestCount = count;
+                                lowestId = id;
+                            }
+                        }
+                        // Práh proti žabomyším válkám (Cache Thrashing)
+                        if (currentCount >= lowestCount + REPLACEMENT_THRESHOLD) {
+                            shouldProcess = true; 
+                            tileToRemove = lowestId;
+                        }
+                    }
+
+                    // 2. Těžká práce s Canvasem pouze pro úspěšné kandidáty
+                    if (shouldProcess) {
+                        sharedCtx.fillStyle = "#FFFFFF"; 
+                        sharedCtx.fillRect(0, 0, 256, 256);
+                        sharedCtx.drawImage(task.img, 0, 0, 256, 256);
+                        var base64Data = sharedCanvas.toDataURL('image/jpeg', 0.15); // Kvalita 15%
+
+                        // Ochrana proti bílým duchům a chybám CORS (Tainted Canvas)
+                        if (base64Data.length > 3500) {
+                            if (tileToRemove) {
+                                localStorage.removeItem('mapCache_tile_' + tileToRemove);
+                            }
+                            localStorage.setItem('mapCache_tile_' + task.tileId, base64Data);
+                            scheduleStorageUpdate(); 
+                        }
+                    }
+                } catch (e) {}
+
+                finishTask(); // Odečteme z UI počítadla
+                setTimeout(processNextInQueue, 50); // Pauza 50ms před další dlaždicí
+            }
+
+            // --- CUSTOM CACHED LAYER CLASS ---
+            var CachedTileLayer = L.TileLayer.extend({
+                createTile: function (coords, done) {
+                    var img = document.createElement('img');
+                    img.crossOrigin = "Anonymous"; // Zásadní pro Canvas a Mapy.cz
+                    
+                    var url = this.getTileUrl(coords);
+                    var layerName = this.options.layerName || "unknown";
+                    var tileId = layerName + "_" + coords.z + "_" + coords.x + "_" + coords.y;
+
+                    // 1. Zápis statistik (LRU + Časová značka)
+                    var stats = getLocalObj('mapCache_stats', {});
+                    var now = new Date().getTime();
+                    
+                    stats[tileId] = {
+                        c: (stats[tileId] && stats[tileId].c ? stats[tileId].c : 0) + 1,
+                        t: now
+                    };
+                    
+                    var statKeys = Object.keys(stats);
+                    if (statKeys.length > STATS_LIMIT) {
+                        // Seřadíme podle času: nejstarší první
+                        statKeys.sort(function(a, b) { return stats[a].t - stats[b].t; });
+                        
+                        var toDeleteCount = Math.floor(STATS_LIMIT * 0.05); // Smažeme 5 %
+                        var deletedSoFar = 0;
+
+                        for (var i = 0; i < statKeys.length && deletedSoFar < toDeleteCount; i++) {
+                            var keyToDrop = statKeys[i];
+                            // Ochrana nováčka: Nikdy nemažeme tu, kterou právě načítáme
+                            if (keyToDrop !== tileId) {
+                                // Synchronizace: Smažeme i base64 obrázek, pokud existuje
+                                localStorage.removeItem('mapCache_tile_' + keyToDrop);
+                                delete stats[keyToDrop];
+                                deletedSoFar++;
+                            }
+                        }
+                    }
+                    setLocalObj('mapCache_stats', stats);
+
+                    // 2. Čtení Cache a Samooprava
+                    var cachedData = null;
+                    try { cachedData = localStorage.getItem('mapCache_tile_' + tileId); } catch(e){}
+
+                    if (cachedData && cachedData.length > 3500) {
+                        // HIT: Platná dlaždice v mezipaměti
+                        img.src = cachedData;
+                        setTimeout(function() { done(null, img); }, 0); 
+                    } else {
+                        // MISS nebo POŠKOZENO
+                        if (cachedData !== null) {
+                            // Samooprava: klíč existuje, ale data jsou rozbitá -> vyčistit
+                            try { localStorage.removeItem('mapCache_tile_' + tileId); } catch(e) {}
+                        }
+
+                        startTask(); 
+                        
+                        L.DomEvent.on(img, 'load', L.Util.bind(function () {
+                            done(null, img);
+                            this._evaluateCache(img, tileId);
+                        }, this));
+                        
+                        L.DomEvent.on(img, 'error', L.Util.bind(function (error) {
+                            done(error, img);
+                            finishTask(); // Chyba sítě, zahoď úkol
+                        }, this));
+
+                        img.src = url;
+                    }
+                    return img;
+                },
+
+                _evaluateCache: function (img, tileId) {
+                    try { if (!window.localStorage) { finishTask(); return; } } catch(e) { finishTask(); return; }
+                    if (!img.naturalWidth || img.naturalWidth === 0) { finishTask(); return; }
+
+                    // Pošleme do fronty, fronta si limit pohlídá
+                    conversionQueue.push({ img: img, tileId: tileId });
+                    if (!isProcessingQueue) processNextInQueue();
+                }
+            });
+
+            var LowResCachedLayer = CachedTileLayer.extend({
+                options: { zoomOffset: -1, tileSize: 512, maxNativeZoom: 18 }
+            });
+
+            // --- MAP INITIALIZATION ---
+            var lat = clamp(parseNumber(getQueryParam("lat"), 49.8285650), -85.0511, 85.0511);
+            var lon = clamp(parseNumber(getQueryParam("lon"), 18.1733317), -180, 180);
+            var zoom = clamp(Math.round(parseNumber(getQueryParam("zoom"), 11)), 0, 19);
+
+            var visualScale = clamp(parseNumber(getQueryParam("scale"), 0.75), 0.5, 1);
+            var mapElement = document.getElementById("map");
+            mapElement.style.transformOrigin = "0 0";
+            mapElement.style.transform = "scale(" + visualScale + ")";
+            mapElement.style.width = (100 / visualScale) + "%";
+            mapElement.style.height = (100 / visualScale) + "%";
+
+            var map = L.map("map", { zoomControl: true, attributionControl: true }).setView([lat, lon], zoom);
+
+            map.createPane("namesPane");
+            map.getPane("namesPane").style.zIndex = 650;
+            map.getPane("namesPane").style.pointerEvents = "none";
+
+            var attribution = '<a href="https://api.mapy.com/copyright" target="_blank">&copy; Seznam.cz a.s. a další</a>';
+
+            var browserLanguage = ((navigator.language || navigator.userLanguage || "").toLowerCase());
+            var isCzechOrSlovak = browserLanguage.indexOf("cs") === 0 || browserLanguage.indexOf("sk") === 0;
+            var layerLabels = isCzechOrSlovak
+                ? { outdoor: "Turistická", winter: "Zimní", aerial: "Letecká" }
+                : { outdoor: "Outdoor", winter: "Winter", aerial: "Aerial" };
+
+            var tileLayersByKey = {
+                outdoor: new CachedTileLayer("https://api.mapy.com/v1/maptiles/outdoor/256/{z}/{x}/{y}?apikey=" + API_KEY, {
+                    minZoom: 0, maxZoom: 19, attribution: attribution, layerName: "outdoor", crossOrigin: "Anonymous"
+                }),
+                winter: new CachedTileLayer("https://api.mapy.com/v1/maptiles/winter/256/{z}/{x}/{y}?apikey=" + API_KEY, {
+                    minZoom: 0, maxZoom: 19, attribution: attribution, layerName: "winter", crossOrigin: "Anonymous"
+                }),
+                aerial: new LowResCachedLayer("https://api.mapy.com/v1/maptiles/aerial/256/{z}/{x}/{y}?apikey=" + API_KEY, {
+                    minZoom: 1, maxZoom: 19, attribution: attribution, layerName: "aerial", crossOrigin: "Anonymous"
+                })
+            };
+
+            var namesOverlay = L.tileLayer("https://api.mapy.com/v1/maptiles/names-overlay/256/{z}/{x}/{y}?apikey=" + API_KEY, {
+                minZoom: 0, maxZoom: 19, pane: "namesPane", attribution: attribution
+            });
+
+            var baseMaps = {};
+            baseMaps[layerLabels.outdoor] = tileLayersByKey.outdoor;
+            baseMaps[layerLabels.winter] = tileLayersByKey.winter;
+            baseMaps[layerLabels.aerial] = tileLayersByKey.aerial;
+
+            L.control.layers(baseMaps, null, { collapsed: true }).addTo(map);
+
+            function updateLayerLogic(key) {
+                if (key === "aerial") {
+                    if (!map.hasLayer(namesOverlay)) namesOverlay.addTo(map);
+                    namesOverlay.bringToFront();
+                } else {
+                    if (map.hasLayer(namesOverlay)) map.removeLayer(namesOverlay);
+                }
+                try { localStorage.setItem("mapycz.baseLayer", key); } catch (e) {}
+            }
+
+            var savedKey = "outdoor";
+            try { savedKey = localStorage.getItem("mapycz.baseLayer") || "outdoor"; } catch (e) {}
+            tileLayersByKey[savedKey].addTo(map);
+            updateLayerLogic(savedKey);
+
+            map.on("baselayerchange", function (e) {
+                var key = "outdoor";
+                if (e.name === layerLabels.winter) key = "winter";
+                if (e.name === layerLabels.aerial) key = "aerial";
+                updateLayerLogic(key);
+            });
+
+            map.on("zoomend", function() {
+                if (map.hasLayer(namesOverlay)) namesOverlay.bringToFront();
+            });
+
+            var LogoControl = L.Control.extend({
+                options: { position: "bottomleft" },
+                onAdd: function () {
+                    var container = L.DomUtil.create("div", "mapycz-logo-control");
+                    container.innerHTML = '<a href="https://mapy.com/" target="_blank"><img src="https://upload.wikimedia.org/wikipedia/commons/c/c6/Logo_Mapy-com.svg" alt="Mapy.cz" /></a>';
+                    L.DomEvent.disableClickPropagation(container);
+                    return container;
+                }
+            });
+
+            new LogoControl().addTo(map);
+            L.marker([lat, lon]).addTo(map);
+
+            window.setTimeout(function () {
+                var controls = mapElement.querySelector(".leaflet-control-container");
+                if (controls && visualScale > 0) { controls.style.zoom = 1 / visualScale; }
+                map.invalidateSize(false);
+                updateStorageTracker(); 
+            }, 0);
+        })();
+    </script>
+</body>
+</html>

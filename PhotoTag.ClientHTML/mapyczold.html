@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Mapa Phototag Deluxe</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #111;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Prevent the upscaled satellite tiles from looking too "blocky" */
+        .leaflet-tile-container img {
+            image-rendering: auto;
+        }
+
+        .mapycz-logo-control,
+        .mapycz-logo-control a {
+            display: block;
+            margin: 0;
+            padding: 0;
+            line-height: 0;
+            height: 24px;
+        }
+
+        .mapycz-logo-control img {
+            display: block;
+            width: 109px;
+            height: 24px;
+        }
+
+        .leaflet-bottom .mapycz-logo-control.leaflet-control {
+            margin-bottom: 0;
+            margin-left: 0;
+        }
+
+        .leaflet-control-container,
+        .leaflet-top,
+        .leaflet-bottom {
+            z-index: 1200;
+        }
+
+        .leaflet-touch .leaflet-control-zoom a,
+        .leaflet-control-zoom a {
+            width: 56px !important;
+            height: 56px !important;
+            line-height: 56px !important;
+            font-size: 36px !important;
+            font-weight: bold;
+        }
+
+        .leaflet-touch .leaflet-control-layers-toggle,
+        .leaflet-control-layers-toggle {
+            width: 56px !important;
+            height: 56px !important;
+            background-size: 34px 34px !important;
+        }
+
+        .leaflet-control-layers-expanded {
+            padding: 8px 10px;
+        }
+
+        .leaflet-control-layers-expanded label {
+            line-height: 32px;
+            font-size: 22px;
+        }
+
+        .leaflet-control-layers-selector {
+            width: 24px;
+            height: 24px;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script>
+        (function () {
+            var API_KEY = "rL6eTdgGhOOwKz2xc7b1JfI4BW96j-FWMFnaIFicZHQ";
+
+            // --- HELPER FUNCTIONS ---
+            function getQueryParam(name) {
+                var escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+                var regex = new RegExp("[?&]" + escaped + "=([^&#]*)");
+                var match = regex.exec(window.location.search);
+                return match ? decodeURIComponent(match[1].replace(/\+/g, " ")) : null;
+            }
+
+            function parseNumber(value, fallback) {
+                var num = parseFloat(value);
+                return isNaN(num) ? fallback : num;
+            }
+
+            function clamp(value, min, max) {
+                return Math.min(Math.max(value, min), max);
+            }
+
+            function setCookie(name, value, days) {
+                var expires = "";
+                if (days) {
+                    var date = new Date();
+                    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                    expires = "; expires=" + date.toUTCString();
+                }
+                document.cookie = name + "=" + encodeURIComponent(value) + expires + "; path=/";
+            }
+
+            function getCookie(name) {
+                var prefix = name + "=";
+                var cookies = document.cookie ? document.cookie.split(";") : [];
+                for (var i = 0; i < cookies.length; i++) {
+                    var c = cookies[i].replace(/^\s+/, "");
+                    if (c.indexOf(prefix) === 0) return decodeURIComponent(c.substring(prefix.length));
+                }
+                return null;
+            }
+
+            // --- CUSTOM LAYER CLASS ---
+            // This class forces Leaflet to pull tiles from a lower zoom level 
+            // but scale them up so they stay in the correct geographic spot.
+            var LowResTileLayer = L.TileLayer.extend({
+                options: {
+                    zoomOffset: -1,
+                    tileSize: 512,
+                    maxNativeZoom: 18 // Mapy.cz aerial usually ends around 19
+                }
+            });
+
+            // --- MAP INITIALIZATION ---
+            var lat = clamp(parseNumber(getQueryParam("lat"), 49.8285650), -85.0511, 85.0511);
+            var lon = clamp(parseNumber(getQueryParam("lon"), 18.1733317), -180, 180);
+            var zoom = clamp(Math.round(parseNumber(getQueryParam("zoom"), 11)), 0, 19);
+
+            var visualScale = clamp(parseNumber(getQueryParam("scale"), 0.75), 0.5, 1);
+            var mapElement = document.getElementById("map");
+            mapElement.style.transformOrigin = "0 0";
+            mapElement.style.transform = "scale(" + visualScale + ")";
+            mapElement.style.width = (100 / visualScale) + "%";
+            mapElement.style.height = (100 / visualScale) + "%";
+
+            var map = L.map("map", {
+                zoomControl: true,
+                attributionControl: true
+            }).setView([lat, lon], zoom);
+
+            map.createPane("namesPane");
+            map.getPane("namesPane").style.zIndex = 650;
+            map.getPane("namesPane").style.pointerEvents = "none";
+
+            var attribution = '<a href="https://api.mapy.com/copyright" target="_blank">&copy; Seznam.cz a.s. a další</a>';
+
+            // --- LAYER CONFIGURATION ---
+            var browserLanguage = ((navigator.language || navigator.userLanguage || "").toLowerCase());
+            var isCzechOrSlovak = browserLanguage.indexOf("cs") === 0 || browserLanguage.indexOf("sk") === 0;
+            var layerLabels = isCzechOrSlovak
+                ? { outdoor: "Turistická", winter: "Zimní", aerial: "Letecká" }
+                : { outdoor: "Outdoor", winter: "Winter", aerial: "Aerial" };
+
+            var tileLayersByKey = {
+                outdoor: L.tileLayer("https://api.mapy.com/v1/maptiles/outdoor/256/{z}/{x}/{y}?apikey=" + API_KEY, {
+                    minZoom: 0, maxZoom: 19, attribution: attribution
+                }),
+                winter: L.tileLayer("https://api.mapy.com/v1/maptiles/winter/256/{z}/{x}/{y}?apikey=" + API_KEY, {
+                    minZoom: 0, maxZoom: 19, attribution: attribution
+                }),
+                aerial: new LowResTileLayer("https://api.mapy.com/v1/maptiles/aerial/256/{z}/{x}/{y}?apikey=" + API_KEY, {
+                    minZoom: 1, maxZoom: 19, attribution: attribution
+                })
+            };
+
+            var namesOverlay = L.tileLayer("https://api.mapy.com/v1/maptiles/names-overlay/256/{z}/{x}/{y}?apikey=" + API_KEY, {
+                minZoom: 0, maxZoom: 19, pane: "namesPane", attribution: attribution
+            });
+
+            // --- LAYER CONTROL ---
+            var baseMaps = {};
+            baseMaps[layerLabels.outdoor] = tileLayersByKey.outdoor;
+            baseMaps[layerLabels.winter] = tileLayersByKey.winter;
+            baseMaps[layerLabels.aerial] = tileLayersByKey.aerial;
+
+            L.control.layers(baseMaps, null, { collapsed: true }).addTo(map);
+
+            // --- LAYER PERSISTENCE & SWITCHING ---
+            function savePreferredLayer(name) {
+                try { localStorage.setItem("mapycz.baseLayer", name); } catch (e) {}
+                setCookie("mapycz.baseLayer", name, 365);
+            }
+
+            function loadPreferredLayer() {
+                var val = null;
+                try { val = localStorage.getItem("mapycz.baseLayer"); } catch (e) {}
+                return val || getCookie("mapycz.baseLayer") || "outdoor";
+            }
+
+            function updateLayerLogic(key) {
+                if (key === "aerial") {
+                    if (!map.hasLayer(namesOverlay)) namesOverlay.addTo(map);
+                    namesOverlay.bringToFront();
+                } else {
+                    if (map.hasLayer(namesOverlay)) map.removeLayer(namesOverlay);
+                }
+                savePreferredLayer(key);
+            }
+
+            // Initial load
+            var savedKey = loadPreferredLayer();
+            tileLayersByKey[savedKey].addTo(map);
+            updateLayerLogic(savedKey);
+
+            map.on("baselayerchange", function (e) {
+                var key = "outdoor";
+                if (e.name === layerLabels.winter) key = "winter";
+                if (e.name === layerLabels.aerial) key = "aerial";
+                updateLayerLogic(key);
+            });
+
+            // Ensure labels stay on top after zoom
+            map.on("zoomend", function() {
+                if (map.hasLayer(namesOverlay)) namesOverlay.bringToFront();
+            });
+
+            // --- LOGO & MARKER ---
+            var LogoControl = L.Control.extend({
+                options: { position: "bottomleft" },
+                onAdd: function () {
+                    var container = L.DomUtil.create("div", "mapycz-logo-control");
+                    container.innerHTML = '<a href="https://mapy.com/" target="_blank"><img src="https://upload.wikimedia.org/wikipedia/commons/c/c6/Logo_Mapy-com.svg" alt="Mapy.cz" /></a>';
+                    L.DomEvent.disableClickPropagation(container);
+                    return container;
+                }
+            });
+
+            new LogoControl().addTo(map);
+            L.marker([lat, lon]).addTo(map);
+
+            window.setTimeout(function () {
+                var controls = mapElement.querySelector(".leaflet-control-container");
+                if (controls && visualScale > 0) {
+                    controls.style.zoom = 1 / visualScale;
+                }
+                map.invalidateSize(false);
+            }, 0);
+        })();
+    </script>
+</body>
+</html>

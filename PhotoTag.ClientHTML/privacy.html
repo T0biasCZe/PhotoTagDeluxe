@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* Modern UI / Metro Design Theme */
+        body { 
+            font-family: "Segoe UI Light", "Segoe WP Light", "Segoe UI", sans-serif; 
+            line-height: 1.2; 
+            color: #ffffff; 
+            padding: 10px 25px 50px 25px; /* Větší padding pro Panorama look */
+            background-color: transparent; /* Průhledné, aby prosvítalo pozadí appky */
+        }
+        
+        h1 { 
+            font-size: 42px; 
+            font-weight: 100; 
+            margin: 0 0 30px 0; 
+            text-transform: lowercase; /* Typické pro WP nadpisy */
+            color: #ffffff;
+        }
+        
+        h2 { 
+            font-size: 24px; 
+            font-weight: 300; 
+            margin-top: 40px; 
+            color: #ffffff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        ul { padding-left: 0; list-style-type: none; }
+        
+        li { margin-bottom: 15px; font-size: 17px; }
+        
+        b { font-weight: 600; color: #ffffff; }
+        
+        /* Odkazy v barvě WP Accent (nebo bílé s podtržením) */
+        a { color: #ffffff; text-decoration: underline; }
+        
+        /* Štítky ve stylu Metro dlaždic */
+        .tag { 
+            display: inline-block;
+            border: 1px solid #ffffff;
+            padding: 2px 8px;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        /* Fallback pro případ, že WebView neumí transparentnost (Android) */
+        @media screen and (max-width: 800px) {
+            /* Pokud je pozadí aplikace příliš světlé, můžeš tady přidat fallback */
+        }
+    </style>
+</head>
+<body>
+
+    <div id="content-cs">
+        <h1>Zásady ochrany soukromí</h1>
+        <h2>1. Kdo spravuje data?</h2>
+        <ul>
+            <li><b>Self-hosted:</b> Pokud si hostujete vlastní server, autor aplikace k vašim datům nemá přístup. Správcem je provozovatel dané instance.</li>
+            <li><b>Centrální server:</b> Správcem je autor aplikace (T0biasCZe).</li>
+        </ul>
+        <h2>2. Jaká data se zpracovávají?</h2>
+        <ul>
+            <li><span class="tag">Centrální server</span> <b>E-mail:</b> Pouze pro verifikaci účtu a obnovu hesla.</li>
+            <li><span class="tag">Centrální server</span> <b>Logy:</b> IP adresa a model zařízení pro účely zabezpečení a diagnostiky.</li>
+            <li><span class="tag">Obecné</span> <b>GPS poloha:</b> Ukládá se k záznamům pro potřeby geotaggingu.</li>
+            <li><span class="tag">Obecné</span> <b>Náhledová fotografie:</b> Volitelně lze k záznamu uložit malý snímek pro snazší pozdější identifikaci.</li>
+        </ul>
+        <h2>3. Služby třetích stran</h2>
+        <ul>
+            <li><span class="tag">Klientská aplikace</span> <b>Mapy.cz:</b> Mapové podklady se stahují přímo ze serverů Seznamu. <a target="_blank" href="https://o-seznam.cz/pravni-informace/ochrana-udaju/mapy-com/">Zásady soukromí</a>.</li>
+            <li><span class="tag">Centrální server</span> <b>Cloudflare:</b> Zabezpečení provozu centrálního serveru. <a target="_blank" href="https://www.cloudflare.com/privacypolicy/">Zásady soukromí</a>.</li>
+        </ul>
+        <h2>4. Vaše práva</h2>
+        <p>Při používání centrálního serveru máte dle GDPR právo na výmaz dat: <a href="mailto:phototag@tobikcze.eu"><b>phototag@tobikcze.eu</b></a></p>
+    </div>
+
+    <div id="content-en">
+        <h1>Privacy Policy</h1>
+        <h2>1. Data Responsibility</h2>
+        <ul>
+            <li><b>Self-hosted:</b> You control your data. The developer has no access. The instance admin is the data controller.</li>
+            <li><b>Central Server:</b> Data is managed by the developer (T0biasCZe).</li>
+        </ul>
+        <h2>2. Data Collection & Scope</h2>
+        <ul>
+            <li><span class="tag">Central Server</span> <b>Email Address:</b> For account verification and recovery.</li>
+            <li><span class="tag">Central Server</span> <b>Service Logs:</b> IP address and device model logged for security and debugging.</li>
+            <li><span class="tag">All</span> <b>GPS Location:</b> Stored with each entry for geotagging purposes.</li>
+            <li><span class="tag">All</span> <b>Thumbnail:</b> Optionally, a small photo can be stored alongside each tag for easier identification.</li>
+        </ul>
+        <h2>3. Third-Party Services</h2>
+        <ul>
+            <li><span class="tag">Client App</span> <b>Mapy.cz:</b> Fetches map tiles directly. Your IP is shared with Seznam.cz. <a target="_blank" href="https://o-seznam.cz/pravni-informace/ochrana-udaju/mapy-com/">Privacy Policy</a>.</li>
+            <li><span class="tag">Central Server</span> <b>Cloudflare:</b> Secure network tunneling for the official instance. <a target="_blank" href="https://www.cloudflare.com/privacypolicy/">Privacy Policy</a>.</li>
+        </ul>
+        <h2>4. Your Rights</h2>
+        <p>If using the central server, you have the right to data deletion (GDPR): <a href="mailto:phototag@tobikcze.eu"><b>phototag@tobikcze.eu</b></a></p>
+    </div>
+
+    <script type="text/javascript">
+        var lang = navigator.language || navigator.userLanguage || "en";
+        if (lang.indexOf("cs") === 0 || lang.indexOf("sk") === 0) {
+			console.log("CZSK");
+            document.getElementById("content-en").style.display = "none";
+        } else {
+			console.log("bad weather");
+            document.getElementById("content-cs").style.display = "none";
+        }
+    </script>
+</body>
+</html>

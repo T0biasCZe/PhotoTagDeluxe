@@ -1,0 +1,59 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects Condition="'$(MSBuildVersion)' == '' Or '$(MSBuildVersion)' &lt; '16.0'">$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <SharedGUID>aedd89b5-fffc-4c81-bf0b-2845846f86ad</SharedGUID>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <Import_RootNamespace>PhotoTag.ClientHTML</Import_RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="$(MSBuildThisFileDirectory)images\apx100.png" />
+    <Content Include="$(MSBuildThisFileDirectory)images\apx400.png" />
+    <Content Include="$(MSBuildThisFileDirectory)images\Cinestill.png" />
+    <Content Include="$(MSBuildThisFileDirectory)images\cinestill400d.png" />
+    <Content Include="$(MSBuildThisFileDirectory)images\colorplus200.jpg" />
+    <Content Include="$(MSBuildThisFileDirectory)images\colourplus200.png" />
+    <Content Include="$(MSBuildThisFileDirectory)images\colourplus400.png" />
+    <Content Include="$(MSBuildThisFileDirectory)images\ektacolorpro.png" />
+    <Content Include="$(MSBuildThisFileDirectory)images\ektapan.png" />
+    <Content Include="$(MSBuildThisFileDirectory)images\ektar100.png" />
+    <Content Include="$(MSBuildThisFileDirectory)images\foma.png" />
+    <Content Include="$(MSBuildThisFileDirectory)images\fomapan100.png" />
+    <Content Include="$(MSBuildThisFileDirectory)images\fomapan200.png" />
+    <Content Include="$(MSBuildThisFileDirectory)images\fomapan200r.png" />
+    <Content Include="$(MSBuildThisFileDirectory)images\fomapan400.png" />
+    <Content Include="$(MSBuildThisFileDirectory)images\fujicolor400.png" />
+    <Content Include="$(MSBuildThisFileDirectory)images\fujifilm200.png" />
+    <Content Include="$(MSBuildThisFileDirectory)images\fujifilm400.png" />
+    <Content Include="$(MSBuildThisFileDirectory)images\gold200.png" />
+    <Content Include="$(MSBuildThisFileDirectory)images\harman.png" />
+    <Content Include="$(MSBuildThisFileDirectory)images\ilford.png" />
+    <Content Include="$(MSBuildThisFileDirectory)images\ilfordpan100.png" />
+    <Content Include="$(MSBuildThisFileDirectory)images\ilfordpan400.png" />
+    <Content Include="$(MSBuildThisFileDirectory)images\kodak.png" />
+    <Content Include="$(MSBuildThisFileDirectory)images\neopan100.png" />
+    <Content Include="$(MSBuildThisFileDirectory)images\phoenix200.png" />
+    <Content Include="$(MSBuildThisFileDirectory)images\phoenixII200.png" />
+    <Content Include="$(MSBuildThisFileDirectory)images\portra-400.png" />
+    <Content Include="$(MSBuildThisFileDirectory)images\superia400.png" />
+    <Content Include="$(MSBuildThisFileDirectory)images\tmax-400.png" />
+    <Content Include="$(MSBuildThisFileDirectory)images\trix-s400.png" />
+    <Content Include="$(MSBuildThisFileDirectory)images\ultramax400.png" />
+    <Content Include="$(MSBuildThisFileDirectory)index.html" />
+    <Content Include="$(MSBuildThisFileDirectory)mapycz copy.html" />
+    <Content Include="$(MSBuildThisFileDirectory)mapycz.html" />
+    <Content Include="$(MSBuildThisFileDirectory)mapyczold.html" />
+    <Content Include="$(MSBuildThisFileDirectory)stylopis.css" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)apiClient.js" />
+    <None Include="$(MSBuildThisFileDirectory)images\afga.svg" />
+    <None Include="$(MSBuildThisFileDirectory)images\fujifilm.svg" />
+    <None Include="$(MSBuildThisFileDirectory)login.js" />
+    <None Include="$(MSBuildThisFileDirectory)metroDropdown.js" />
+    <None Include="$(MSBuildThisFileDirectory)panorama.js" />
+    <None Include="$(MSBuildThisFileDirectory)rollcreation.js" />
+  </ItemGroup>
+</Project>
