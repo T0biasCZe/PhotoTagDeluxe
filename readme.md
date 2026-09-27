@@ -11,13 +11,17 @@ Android client: SOON
 Available for Windows 7 64bit and newer
 Download on releases page
 
-Usage:
-1) Click "import photos", and select folder where scans for 1 specific roll are. Do NOT mix different rolls in 1 folder
-2) Click "Online data". Enter ptdx.tobikcze.eu, or your selfhosted server address (for example, 127.0.0.1 if running on your PC, or your domain, for example, ptdx.example.com), alongside your username and password
-3) After logging, select which roll data you want to apply, and click Download
-4) Modify file zone offset if needed.
-5) I recommend checking "Rename file". It will name the files in FILM_YYYY-MM-DD_HH-MM-SS format.
-6) Click "Save data". All the data will be injected into photos.
+Usage:    
+1) Click "import photos", and select folder where scans for 1 specific roll are. Do NOT mix different rolls in 1 folder      
+    <img height="240" alt="image" src="https://github.com/user-attachments/assets/4ce0a271-3973-4e4e-affe-080d7b30fdfb" />      
+2) Click "Online data". Enter ptdx.tobikcze.eu, or your selfhosted server address (for example, 127.0.0.1 if running on your PC, or your domain, for example, ptdx.example.com), alongside your username and password        
+3) After logging, select which roll data you want to apply, and click Download       
+4) Adjust shot indexes if they were not saved correctly in client.        
+    <img height="240" alt="image" src="https://github.com/user-attachments/assets/9531c9b1-27a5-4c6b-8d5d-b7dd39f483a0" />     
+5) Modify file zone offset if needed.     
+6) I recommend checking "Rename file". It will name the files in FILM_YYYY-MM-DD_HH-MM-SS format.      
+7) Click "Save data". All the data will be injected into photos.         
+    <img height="240" alt="image" src="https://github.com/user-attachments/assets/1a014b0a-695d-4325-94a4-170a79e97b20" />        
 
 ## Server for selfhost
 As an alternative to using the centralized ptdx.tobikcze.eu server, you can selfhost your own:
