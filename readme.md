@@ -4,7 +4,7 @@ Application for easily taggining date time and gps when shooting on film.
 ## Phone clients
 Windows Phone 8.1+ client    
 - Available on live store:    SOON
-- Xap available on releases page           
+- Xap available on [releases page](https://github.com/T0biasCZe/PhotoTagDeluxe/releases)           
 Android client: SOON
 
 ## Metadata applier client
